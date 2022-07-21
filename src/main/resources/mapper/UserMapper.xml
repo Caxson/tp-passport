@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.web.tp.passport.mapper.UserMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tp_user (username, password, nickname, tel)
+        VALUES (#{username}, #{password}, #{nickname}, #{tel})
+    </insert>
+
+    <select id="countByUsername" resultType="int">
+        SELECT count(*)
+        FROM tp_user
+        WHERE username = #{username}
+    </select>
+
+    <select id="getIdByUsername" resultType="long">
+        SELECT id
+        FROM tp_user
+        WHERE username = #{username}
+    </select>
+
+    <select id="selectByUsername" resultMap="LoginResultMap">
+        select tu.id, tu.username, tu.password, tu.tel, tu.enable, tp.value
+        from tp_user tu
+                 left join tp_user_role tur on tu.id = tur.user_id
+                 left join tp_role_permission trp on tur.role_id = trp.role_id
+                 left join tp_permission tp on trp.permission_id = tp.id
+        where tu.username = #{username};
+    </select>
+
+    <select id="list" resultMap="ListResultMap">
+        SELECT
+        <include refid="ListQueryFields"/>
+        FROM
+        tp_user
+    </select>
+
+
+    <resultMap id="LoginResultMap" type="cn.web.tp.passport.pojo.vo.UserLoginVO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="tel" property="tel"/>
+        <result column="enable" property="enable"/>
+        <collection property="permissionsValues" ofType="java.lang.String">
+            <constructor>
+                <arg column="value"/>
+            </constructor>
+        </collection>
+    </resultMap>
+
+    <sql id="ListQueryFields">
+        <if test="true">
+            tel, username, nickname, password, enable
+        </if>
+    </sql>
+
+    <resultMap id="ListResultMap" type="cn.web.tp.passport.pojo.vo.UserListItemVO">
+        <id column="id" property="id"/>
+    </resultMap>
+</mapper>

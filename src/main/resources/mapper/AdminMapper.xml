@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.web.tp.passport.mapper.AdminMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tp_admin (username, password, nickname, phone, email, description, enable)
+        VALUES (#{username}, #{password}, #{nickname}, #{phone}, #{email}, #{description}, #{enable})
+    </insert>
+
+    <select id="countByUsername" resultType="int">
+        SELECT count(*)
+        FROM tp_admin
+        WHERE username = #{username}
+    </select>
+
+    <select id="getIdByUsername" resultType="long">
+        SELECT id
+        FROM tp_admin
+        WHERE username = #{username}
+    </select>
+
+    <select id="selectByUsername" resultMap="LoginResultMap">
+        select ta.id, ta.username, ta.password, ta.enable, tp.value
+        from tp_admin ta
+                 left join tp_admin_role tar on ta.id = tar.admin_id
+                 left join tp_role_permission trp on tar.role_id = trp.role_id
+                 left join tp_permission tp on trp.permission_id = tp.id
+        where ta.username = #{username};
+    </select>
+
+    <select id="list" resultMap="ListResultMap">
+        SELECT
+        <include refid="ListQueryFields"/>
+        FROM
+        tp_admin
+    </select>
+
+
+    <resultMap id="LoginResultMap" type="cn.web.tp.passport.pojo.vo.AdminLoginVO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="enable" property="enable"/>
+        <collection property="permissionsValues" ofType="java.lang.String">
+            <constructor>
+                <arg column="value"/>
+            </constructor>
+        </collection>
+    </resultMap>
+
+    <sql id="ListQueryFields">
+        <if test="true">
+            id, username, password, nickname, phone, email, enable
+        </if>
+    </sql>
+
+    <resultMap id="ListResultMap" type="cn.web.tp.passport.pojo.vo.AdminListItemVO">
+        <id column="id" property="id"/>
+    </resultMap>
+</mapper>
