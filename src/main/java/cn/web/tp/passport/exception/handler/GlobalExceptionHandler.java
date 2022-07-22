@@ -47,12 +47,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
-    public JsonResult handleAuthentication(AuthenticationException e){
-        log.error("统一处理【{}】,将向客户端响应：{}",e.getClass().getName(),e.getMessage());
-        return JsonResult.fail(ServiceCode.ERR_UNKNOWN,e.getMessage());
-    }
-
-    @ExceptionHandler
     public JsonResult handleThrowable(Throwable e){
         log.error("统一处理【{}】,将向客户端响应：{}",e.getClass().getName(),e.getMessage());
         String message =  "服务器错误！请稍后重试！";

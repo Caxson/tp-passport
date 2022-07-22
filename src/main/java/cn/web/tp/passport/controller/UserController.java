@@ -1,5 +1,7 @@
 package cn.web.tp.passport.controller;
 
+import cn.web.tp.passport.annotation.RequiredLog;
+import cn.web.tp.passport.annotation.RequiredLogU;
 import cn.web.tp.passport.pojo.dto.UserAddNewDTO;
 import cn.web.tp.passport.pojo.dto.UserLoginDTO;
 import cn.web.tp.passport.pojo.vo.UserListItemVO;
@@ -22,6 +24,7 @@ public class UserController {
     @Autowired
     public IUserService userService;
 
+    @RequiredLog(operation = "用户注册")
     @PostMapping("/add-new")
     public JsonResult addNew(@RequestBody @Valid UserAddNewDTO userAddNewDTO){
         log.debug("请求到的参数：{}",userAddNewDTO);
@@ -29,6 +32,7 @@ public class UserController {
         return JsonResult.ok();
     }
 
+    @RequiredLogU(operation = "用户登录")
     @PostMapping("/login")
     public JsonResult login(@RequestBody UserLoginDTO userLoginDTO, HttpServletResponse response){
         log.debug("请求到的参数：{}", userLoginDTO);

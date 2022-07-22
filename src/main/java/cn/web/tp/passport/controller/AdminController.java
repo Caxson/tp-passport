@@ -1,5 +1,6 @@
 package cn.web.tp.passport.controller;
 
+import cn.web.tp.passport.annotation.RequiredLog;
 import cn.web.tp.passport.pojo.dto.AdminAddNewDTO;
 import cn.web.tp.passport.pojo.dto.AdminLoginDTO;
 import cn.web.tp.passport.pojo.vo.AdminListItemVO;
@@ -20,9 +21,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/admins")
 public class AdminController {
+
     @Autowired
     public IAdminService adminService;
 
+    @RequiredLog(operation = "添加管理员")
     @PreAuthorize("hasAuthority('/ams/admin/update')")
     @PostMapping("/add-new")
     public JsonResult addNew(@RequestBody @Valid AdminAddNewDTO adminAddNewDTO){
@@ -31,6 +34,7 @@ public class AdminController {
         return JsonResult.ok();
     }
 
+    @RequiredLog(operation = "管理员登录")
     @PostMapping("/login")
     public JsonResult login(@RequestBody AdminLoginDTO adminLoginDTO, HttpServletResponse response){
         log.debug("请求到的参数：{}", adminLoginDTO);
@@ -49,6 +53,7 @@ public class AdminController {
         String username = loginPrincipal.getName();
         log.debug("从认证信息中获取当前登录的管理员的用户名：{}",username);
         List<AdminListItemVO> adminListItemVOList =  adminService.list();
+
         return JsonResult.ok(adminListItemVOList);
     }
 }

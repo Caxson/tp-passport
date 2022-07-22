@@ -2,13 +2,16 @@ package cn.web.tp.passport.service.impl;
 
 
 import cn.web.tp.passport.exception.ServiceException;
+import cn.web.tp.passport.mapper.UserLogMapper;
 import cn.web.tp.passport.mapper.UserMapper;
 import cn.web.tp.passport.mapper.UserRoleMapper;
 import cn.web.tp.passport.pojo.dto.UserAddNewDTO;
 import cn.web.tp.passport.pojo.dto.UserLoginDTO;
 import cn.web.tp.passport.pojo.entity.User;
+import cn.web.tp.passport.pojo.entity.UserLog;
 import cn.web.tp.passport.pojo.entity.UserRole;
 import cn.web.tp.passport.pojo.vo.UserListItemVO;
+import cn.web.tp.passport.pojo.vo.UserLoginVO;
 import cn.web.tp.passport.security.LoginPrincipal;
 import cn.web.tp.passport.security.SecurityCode;
 import cn.web.tp.passport.security.ConsumerDetails;
@@ -20,6 +23,7 @@ import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -46,6 +50,19 @@ public class UserServiceImpl implements IUserService {
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private UserLogMapper userLogMapper;
+
+    User userP = new User();
+
+    @Async
+    @Override
+    public void insertLog(UserLog userLog) {
+        String threadName = Thread.currentThread().getName();
+        log.debug("insertLog.threadName={}",threadName);
+        userLogMapper.insert(userLog);
+    }
 
     @Override
     public void addNew(UserAddNewDTO userAddNewDTO) {
@@ -99,6 +116,9 @@ public class UserServiceImpl implements IUserService {
         String username = user.getUsername();
         log.debug("登录成功的用户名：{}", username);
 
+        UserLoginVO ulv = userMapper.selectByUsername(username);
+        BeanUtils.copyProperties(ulv,userP);
+
         Collection<GrantedAuthority> authorities = user.getAuthorities();
         log.debug("登陆成功的用户权限：{}", authorities);
 
@@ -114,5 +134,10 @@ public class UserServiceImpl implements IUserService {
     public List<UserListItemVO> list() {
         log.debug("执行查询列表功能！");
         return userMapper.list();
+    }
+
+    @Override
+    public User getPrinciple() {
+        return userP;
     }
 }

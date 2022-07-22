@@ -2,14 +2,18 @@ package cn.web.tp.passport.service.impl;
 
 
 import cn.web.tp.passport.exception.ServiceException;
+import cn.web.tp.passport.mapper.AdminLogMapper;
 import cn.web.tp.passport.mapper.AdminMapper;
 import cn.web.tp.passport.mapper.AdminRoleMapper;
 import cn.web.tp.passport.pojo.dto.AdminAddNewDTO;
 import cn.web.tp.passport.pojo.dto.AdminLoginDTO;
 import cn.web.tp.passport.pojo.entity.Admin;
+import cn.web.tp.passport.pojo.entity.AdminLog;
 import cn.web.tp.passport.pojo.entity.AdminRole;
 import cn.web.tp.passport.pojo.vo.AdminListItemVO;
+import cn.web.tp.passport.pojo.vo.AdminLoginVO;
 import cn.web.tp.passport.security.AdminDetails;
+import cn.web.tp.passport.security.LoginPrincipal;
 import cn.web.tp.passport.security.SecurityCode;
 import cn.web.tp.passport.service.IAdminService;
 import cn.web.tp.passport.utils.CookieUtils;
@@ -19,6 +23,7 @@ import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -46,6 +51,19 @@ public class AdminServiceImpl implements IAdminService {
 
     @Autowired
     private AdminRoleMapper adminRoleMapper;
+
+    @Autowired
+    private AdminLogMapper adminLogMapper;
+
+    Admin adminP = new Admin();
+
+    @Async
+    @Override
+    public void insertLog(AdminLog adminLog) {
+        String threadName = Thread.currentThread().getName();
+        log.debug("insertLog.threadName={}",threadName);
+        adminLogMapper.insert(adminLog);
+    }
 
     @Override
     public void addNew(AdminAddNewDTO adminAddNewDTO) {
@@ -78,24 +96,36 @@ public class AdminServiceImpl implements IAdminService {
         //Cookies
         CookieUtils.addCookies(adminLoginDTO.getRem(),adminLoginDTO.getUsername(),adminLoginDTO.getPassword(),response,60*24);
 
+        LoginPrincipal loginPrincipal
+                = new LoginPrincipal(
+                adminLoginDTO.getUsername(),
+                SecurityCode.ADMIN_ID);
+        String loginIdentity = JSON.toJSONString(loginPrincipal);
+
         //调用AuthenticationManager执行Spring Security的认证，与此同时框架自动调用loadUserByUsername方法
-        Authentication  loginResult
+        Authentication loginResult
                 = authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
-                                adminLoginDTO.getUsername(), adminLoginDTO.getPassword()));
+                                loginIdentity, adminLoginDTO.getPassword()));
+
+
 
         log.debug("登陆成功!认证方法返回,{}>>>{}", loginResult, loginResult.getClass().getName());
 
         log.debug("尝试获取Principal:{},尝试获取User:{}", loginResult.getPrincipal(), loginResult.getPrincipal().getClass().getName());
-        AdminDetails user = (AdminDetails) (loginResult.getPrincipal());
+        AdminDetails adminDetails = (AdminDetails) (loginResult.getPrincipal());
 
-        Long id = user.getId();
+        Long id = adminDetails.getId();
         log.debug("登陆成功的用户ID:{}", id);
 
-        String username = user.getUsername();
+        String username = adminDetails.getUsername();
         log.debug("登录成功的用户名：{}", username);
 
-        Collection<GrantedAuthority> authorities = user.getAuthorities();
+        AdminLoginVO alv = adminMapper.selectByUsername(username);
+        log.debug("查询到的管理员详情信息:{}",alv);
+        BeanUtils.copyProperties(alv,adminP);
+
+        Collection<GrantedAuthority> authorities = adminDetails.getAuthorities();
         log.debug("登陆成功的用户权限：{}", authorities);
 
         String authoritiesString = JSON.toJSONString(authorities);
@@ -109,5 +139,10 @@ public class AdminServiceImpl implements IAdminService {
     public List<AdminListItemVO> list() {
         log.debug("执行查询列表功能！");
         return adminMapper.list();
+    }
+
+    @Override
+    public Admin getPrinciple() {
+        return adminP;
     }
 }

@@ -21,7 +21,7 @@
     </select>
 
     <select id="selectByUsername" resultMap="LoginResultMap">
-        select tu.id, tu.username, tu.password, tu.tel, tu.enable, tp.value
+        select tu.id, tu.username, tu.password,tu.nickname, tu.tel, tu.enable, tp.value
         from tp_user tu
                  left join tp_user_role tur on tu.id = tur.user_id
                  left join tp_role_permission trp on tur.role_id = trp.role_id
@@ -41,6 +41,7 @@
         <id column="id" property="id"/>
         <result column="username" property="username"/>
         <result column="password" property="password"/>
+        <result column="nickname" property="nickname"/>
         <result column="tel" property="tel"/>
         <result column="enable" property="enable"/>
         <collection property="permissionsValues" ofType="java.lang.String">
